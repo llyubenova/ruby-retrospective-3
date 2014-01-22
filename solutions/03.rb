@@ -1,30 +1,24 @@
 module Graphics
 
   class Canvas
+    attr_reader :canvas, :width, :height
+
     def initialize(width, height)
       @width = width
       @height = height
       @canvas = "-" * width * height
     end
 
-    def width
-      @width
-    end
-
-    def height
-      @height
-    end
-
-    def canvas
-      @canvas
-    end
-
     def set_pixel(x,y)
-      @canvas[y * width + x] = '@'
+      @canvas[y * width + x] = '@' if pixel_in_canvas?(x,y)
     end
 
     def pixel_at?(x,y)
       @canvas[y * width + x] == '@' ? true : false
+    end
+
+    def pixel_in_canvas?(x,y)
+      y * width + x < width * height ? true : false
     end
 
     def draw(figure)
@@ -72,7 +66,8 @@ module Graphics
   <body>
     <div class=\"canvas\">"
         rendered = canvas.canvas.chars.each_slice(canvas.width).map(&:join).join "<br>"
-        rendered.gsub!(/@/, "<b></b>").gsub!(/-/, "<i></i>")
+        rendered.gsub!(/@/, "<b></b>")
+        rendered.gsub!(/-/, "<i></i>")
         html << rendered
         html << "</div>
   </body>
@@ -104,7 +99,7 @@ module Graphics
     end
 
     def hash
-      self.x.hash ^ self.y.hash
+      [x,y].hash
     end
 
     def rasterize
@@ -147,7 +142,7 @@ module Graphics
     end
 
     def hash
-      self.from.hash ^ self.to.hash
+      [from.hash, to.hash].hash
     end
 
     def rasterize
@@ -168,7 +163,7 @@ module Graphics
       from_x.upto to_x do |x|
         steep ? (pixels.push Point.new from_y, x) : (pixels.push Point.new x, from_y)
         error -= dy
-        from_y += step and error += dx if error <= 0
+        from_y += step and error += dx if error < 0
       end
     end
 
@@ -217,7 +212,7 @@ module Graphics
     end
 
     def hash
-      self.start.hash ^ self.end.hash
+      [top_left, bottom_right].hash
     end
 
     def rasterize
