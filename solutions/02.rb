@@ -41,11 +41,11 @@ class TodoList
   end
 
   def filter(criteria)
-    TodoList.new tasks.select {|task| criteria.call task}
+    TodoList.new tasks.select {|task| criteria.match? task}
   end
 
   def adjoin(other)
-    TodoList.new self.tasks + (other.tasks - self.tasks)
+    TodoList.new self.tasks | other.tasks
   end
 
   def tasks_todo
@@ -71,16 +71,38 @@ class Criteria
 
   class << self
     def status(criterion)
-      -> (task) {task.status == criterion}
+      Criterion.new {|task| task.status == criterion}
     end
 
     def priority(criterion)
-      -> (task) {task.priority == criterion}
+      Criterion.new {|task| task.priority == criterion}
     end
 
     def tags(criterion)
-      -> (task) {(criterion - task.tags).size == 0}
+      Criterion.new {|task| (criterion - task.tags).size == 0}
     end
   end
+end
 
+class Criterion
+
+  def initialize(&condition)
+    @condition = condition
+  end
+
+  def match?(task)
+    @condition.call task
+  end
+
+  def &(other)
+    Criterion.new {|task| match?(task) and other.match?(task)}
+  end
+
+  def |(other)
+    Criterion.new {|task| match?(task) or other.match?(task)}
+  end
+
+  def !
+    Criterion.new {|task| not match?(task)}
+  end
 end
